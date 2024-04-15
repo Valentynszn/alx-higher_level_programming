@@ -1,22 +1,25 @@
 #!/usr/bin/python3
-"""
-lists all City objects from the database hbtn_0e_101_usa
+"""0x0F. Python - Object-relational mapping - task 17. From city
 """
 
-import sys
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from relationship_state import State
-from relationship_city import City
+if __name__ == '__main__':
+    from sys import argv, exit
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+    from relationship_state import Base, State
+    from relationship_city import City
 
-if __name__ == "__main__":
-    engine = create_engine("mysql+mysqldb://{}:{}@localhost/{}"
-                           .format(sys.argv[1], sys.argv[2], sys.argv[3]),
+    if len(argv) != 4:
+        exit('Use: 102-relationship_cities_states_list.py <mysql username> '
+             '<mysql password> <database name>')
+
+    engine = create_engine('mysql+mysqldb://{}:{}@localhost:3306/'
+                           '{}'.format(argv[1], argv[2], argv[3]),
                            pool_pre_ping=True)
-    session_maker = sessionmaker(bind=engine)
-    session = session_maker()
+    session = Session(engine)
+    Base.metadata.create_all(engine)  # creates decprecated warning 1681
 
-    for city in session.query(City).order_by(City.id).all():
-        print("{}: {} -> {}".format(city.id, city.name, city.state.name))
+    for city, state in session.query(City, State).filter(
+            City.state_id == State.id).order_by(City.id).all():
+        print("{}: {} -> {}".format(city.id, city.name, state.name))
     session.close()
-    engine.dispose()
